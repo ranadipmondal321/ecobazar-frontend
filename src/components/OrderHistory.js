@@ -134,7 +134,7 @@ function OrderRow({ order, onCancel, cancelling, onExpand, expanded }) {
       {expanded && (
         <tr style={{ background: G_LIGHT }}>
           <td colSpan={5} style={{ padding: "0 16px 20px" }}>
-            <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 24, paddingTop: 4 }}>
+            <div style={{ display: "grid", gridTemplateColumns: window.innerWidth <= 768 ? "1fr" : "1fr 1fr", gap: 24, paddingTop: 4, }}>
               <div>
                 <div style={{ fontSize: 11, fontWeight: 700, color: MUTED, letterSpacing: "0.08em", marginBottom: 4 }}>ORDER PROGRESS</div>
                 <Tracker status={order.status} />
@@ -245,7 +245,7 @@ export default function OrderHistory() {
       </div>
 
       {/* layout */}
-      <div style={{ maxWidth: 1100, margin: "0 auto", padding: "32px 24px", display: "grid", gridTemplateColumns: "220px 1fr", gap: 28 }}>
+      <div style={{ maxWidth: 1100, margin: "0 auto", padding: window.innerWidth <= 768 ? "20px 12px" : "32px 24px", display: "grid", gridTemplateColumns:  window.innerWidth <= 768 ? "1fr" : "220px 1fr", gap: 28 }}>
 
         {/* SIDEBAR */}
                 <div className="bg-[#0b1a2c] text-white p-6 rounded-xl">
@@ -328,7 +328,7 @@ export default function OrderHistory() {
             {/* table */}
             {!loading && !error && paginated.length > 0 && (
               <div style={{ overflowX: "auto" }}>
-                <table style={{ width: "100%", borderCollapse: "collapse" }}>
+                <table style={{ width: "100%", minWidth: 700, borderCollapse: "collapse" }}>
                   <thead>
                     <tr style={{ background: BG, borderBottom: `2px solid ${BORDER}` }}>
                       {["ORDER ID", "DATE", "TOTAL", "STATUS", "ACTION"].map(h => (
