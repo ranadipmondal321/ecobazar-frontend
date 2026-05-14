@@ -2,7 +2,6 @@ import { useState, useEffect } from "react";
 import { getOrders, cancelOrder } from "../api/order";
 import { Link } from "react-router-dom";
 
-/* ─── Ecobazar colour tokens ─── */
 const G = "#00B307";
 const G_DARK = "#008C05";
 const G_LIGHT = "#EBF9EB";
@@ -34,6 +33,7 @@ function Badge({ status }) {
       background: s.bg, color: s.color,
       fontSize: 12, fontWeight: 600,
       border: `1px solid ${s.border}`,
+      whiteSpace: "nowrap",
     }}>
       <span style={{ width: 6, height: 6, borderRadius: "50%", background: s.color, flexShrink: 0 }} />
       {status}
@@ -53,19 +53,19 @@ function Tracker({ status }) {
   );
   const cur = STEPS.indexOf(status);
   return (
-    <div style={{ display: "flex", alignItems: "flex-start", marginTop: 16 }}>
+    <div style={{ display: "flex", alignItems: "flex-start", marginTop: 16, overflowX: "auto" }}>
       {STEPS.map((step, i) => {
         const done = i <= cur;
         const active = i === cur;
         return (
-          <div key={step} style={{ display: "flex", alignItems: "center", flex: i < STEPS.length - 1 ? 1 : "none" }}>
+          <div key={step} style={{ display: "flex", alignItems: "center", flex: i < STEPS.length - 1 ? 1 : "none", minWidth: 0 }}>
             <div style={{ display: "flex", flexDirection: "column", alignItems: "center", gap: 5 }}>
               <div style={{
-                width: 30, height: 30, borderRadius: "50%",
+                width: 28, height: 28, borderRadius: "50%",
                 background: done ? G : WHITE,
                 border: done ? `2px solid ${G}` : `2px solid ${BORDER}`,
                 display: "flex", alignItems: "center", justifyContent: "center",
-                fontSize: 12, fontWeight: 700,
+                fontSize: 11, fontWeight: 700,
                 color: done ? WHITE : "#BDBDBD",
                 boxShadow: active ? `0 0 0 4px ${G_LIGHT}` : "none",
                 flexShrink: 0, transition: "all 0.25s",
@@ -73,14 +73,15 @@ function Tracker({ status }) {
                 {i < cur ? "✓" : i + 1}
               </div>
               <span style={{
-                fontSize: 10, fontWeight: 600, whiteSpace: "nowrap",
+                fontSize: 9, fontWeight: 600, whiteSpace: "nowrap",
                 color: done ? G_DARK : "#BDBDBD", letterSpacing: "0.03em",
               }}>{step}</span>
             </div>
             {i < STEPS.length - 1 && (
               <div style={{
-                flex: 1, height: 2, margin: "0 6px", marginBottom: 16,
+                flex: 1, height: 2, margin: "0 4px", marginBottom: 16,
                 background: i < cur ? G : BORDER, borderRadius: 2,
+                minWidth: 8,
               }} />
             )}
           </div>
@@ -90,39 +91,54 @@ function Tracker({ status }) {
   );
 }
 
-function OrderRow({ order, onCancel, cancelling, onExpand, expanded }) {
-  // ✅ Use saved symbol, fallback to $ if old order has none
+/* ─── Shared cell style ─── */
+const cellStyle = (isMobile, extra = {}) => ({
+  padding: isMobile ? "12px 8px" : "14px 16px",
+  fontSize: isMobile ? 12 : 13,
+  fontWeight: 600,
+  color: TEXT,
+  whiteSpace: "nowrap",
+  verticalAlign: "middle",
+  ...extra,
+});
+
+function OrderRow({ order, onCancel, cancelling, onExpand, expanded, isMobile }) {
   const sym = order.currencySymbol || "$";
 
   return (
     <>
       <tr style={{ borderBottom: `1px solid ${BORDER}`, background: expanded ? G_LIGHT : WHITE, transition: "background 0.2s" }}>
-        <td style={{ padding: "14px 16px", fontSize: 13, fontWeight: 700, color: TEXT }}>
+        <td style={cellStyle(isMobile)}>
           #{order._id.slice(-6).toUpperCase()}
         </td>
-        <td style={{ padding: "14px 16px", fontSize: 13, color: MUTED }}>{fmtDate(order.createdAt)}</td>
-        <td style={{ padding: "14px 16px", fontSize: 13, fontWeight: 700, color: TEXT }}>
-          {sym}{order.totalAmount.toLocaleString("en-IN")}   {/* ✅ was ₹ */}
+        <td style={cellStyle(isMobile)}>
+          {fmtDate(order.createdAt)}
+        </td>
+        <td style={cellStyle(isMobile)}>
+          {sym}{order.totalAmount.toLocaleString("en-IN")}
           <span style={{ fontSize: 11, color: MUTED, fontWeight: 400, marginLeft: 4 }}>
-            ({order.items.length} {order.items.length === 1 ? "Product" : "Products"})
+            ({order.items.length} {order.items.length === 1 ? "item" : "items"})
           </span>
         </td>
-        <td style={{ padding: "14px 16px" }}><Badge status={order.status} /></td>
-        <td style={{ padding: "14px 16px" }}>
-          <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
+        <td style={cellStyle(isMobile)}>
+          <Badge status={order.status} />
+        </td>
+        <td style={cellStyle(isMobile)}>
+          <div style={{ display: "flex", flexDirection: "column", alignItems: "flex-start", gap: 6 }}>
             <button onClick={() => onExpand(order._id)} style={{
               fontSize: 12, fontWeight: 700, color: G,
               background: "none", border: "none", cursor: "pointer", padding: 0,
-              textDecoration: "underline", textUnderlineOffset: 3,
+              textDecoration: "underline", textUnderlineOffset: 3, whiteSpace: "nowrap",
             }}>
-              {expanded ? "Hide Details" : "View Details"}
+              {expanded ? "Hide" : "Details"}
             </button>
             {order.status === "Pending" && (
               <button onClick={() => onCancel(order._id)} disabled={cancelling === order._id} style={{
-                fontSize: 12, fontWeight: 600, color: "#DC2626",
+                fontSize: 11, fontWeight: 600, color: "#DC2626",
                 background: "none", border: "1px solid #FECACA",
-                borderRadius: 6, padding: "3px 10px",
+                borderRadius: 6, padding: "3px 8px",
                 cursor: "pointer", opacity: cancelling === order._id ? 0.5 : 1,
+                whiteSpace: "nowrap",
               }}>
                 {cancelling === order._id ? "…" : "Cancel"}
               </button>
@@ -131,14 +147,27 @@ function OrderRow({ order, onCancel, cancelling, onExpand, expanded }) {
         </td>
       </tr>
 
+      {/* ── Expanded details row — NO whiteSpace:nowrap on this td ── */}
       {expanded && (
         <tr style={{ background: G_LIGHT }}>
-          <td colSpan={5} style={{ padding: "0 16px 20px" }}>
-            <div style={{ display: "grid", gridTemplateColumns: window.innerWidth <= 768 ? "1fr" : "1fr 1fr", gap: 24, paddingTop: 4, }}>
+          <td colSpan={5} style={{
+            padding: isMobile ? "12px 10px" : "16px 20px",
+            fontSize: 13,
+            color: TEXT,
+          }}>
+            <div style={{
+              display: "grid",
+              gridTemplateColumns: isMobile ? "1fr" : "1fr 1fr",
+              gap: 20,
+              paddingTop: 4,
+            }}>
+              {/* Order progress */}
               <div>
                 <div style={{ fontSize: 11, fontWeight: 700, color: MUTED, letterSpacing: "0.08em", marginBottom: 4 }}>ORDER PROGRESS</div>
                 <Tracker status={order.status} />
               </div>
+
+              {/* Items */}
               <div>
                 <div style={{ fontSize: 11, fontWeight: 700, color: MUTED, letterSpacing: "0.08em", marginBottom: 10 }}>ITEMS ORDERED</div>
                 <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
@@ -148,25 +177,27 @@ function OrderRow({ order, onCancel, cancelling, onExpand, expanded }) {
                       background: WHITE, borderRadius: 10, padding: "8px 12px", border: `1px solid ${BORDER}`,
                     }}>
                       {item.img
-                        ? <img src={item.img} alt={item.name} style={{ width: 40, height: 40, borderRadius: 7, objectFit: "cover" }} onError={e => e.target.style.display = "none"} />
-                        : <div style={{ width: 40, height: 40, borderRadius: 7, background: G_LIGHT, display: "flex", alignItems: "center", justifyContent: "center", fontSize: 18 }}>🥦</div>
+                        ? <img src={item.img} alt={item.name} style={{ width: 40, height: 40, borderRadius: 7, objectFit: "cover", flexShrink: 0 }} onError={e => e.target.style.display = "none"} />
+                        : <div style={{ width: 40, height: 40, borderRadius: 7, background: G_LIGHT, display: "flex", alignItems: "center", justifyContent: "center", fontSize: 18, flexShrink: 0 }}>🥦</div>
                       }
-                      <div style={{ flex: 1 }}>
-                        <div style={{ fontSize: 13, fontWeight: 600, color: TEXT }}>{item.name}</div>
-                        <div style={{ fontSize: 11, color: MUTED }}>Qty: {item.quantity} × {sym}{item.price}</div>  {/* ✅ was ₹ */}
+                      <div style={{ flex: 1, minWidth: 0 }}>
+                        <div style={{ fontSize: 13, fontWeight: 600, color: TEXT, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{item.name}</div>
+                        <div style={{ fontSize: 11, color: MUTED }}>Qty: {item.quantity} × {sym}{item.price}</div>
                       </div>
-                      <div style={{ fontSize: 13, fontWeight: 700, color: G }}>{sym}{(item.price * item.quantity).toLocaleString("en-IN")}</div>  {/* ✅ was ₹ */}
+                      <div style={{ fontSize: 13, fontWeight: 700, color: G, flexShrink: 0 }}>{sym}{(item.price * item.quantity).toLocaleString("en-IN")}</div>
                     </div>
                   ))}
                 </div>
               </div>
+
+              {/* Shipping address */}
               <div style={{ gridColumn: "1 / -1" }}>
                 <div style={{ fontSize: 11, fontWeight: 700, color: MUTED, letterSpacing: "0.08em", marginBottom: 8 }}>SHIPPING ADDRESS</div>
                 <div style={{
-                  display: "inline-flex", alignItems: "flex-start", gap: 10,
+                  display: "flex", alignItems: "flex-start", gap: 10,
                   background: WHITE, borderRadius: 10, padding: "12px 16px", border: `1px solid ${BORDER}`, fontSize: 13,
                 }}>
-                  <span style={{ fontSize: 16, marginTop: 1 }}>📍</span>
+                  <span style={{ fontSize: 16, marginTop: 1, flexShrink: 0 }}>📍</span>
                   <div style={{ color: TEXT, lineHeight: 1.6 }}>
                     <strong>{order.shippingAddress?.name}</strong>
                     {order.shippingAddress?.phone && <span style={{ color: MUTED }}> · {order.shippingAddress.phone}</span>}
@@ -195,9 +226,13 @@ export default function OrderHistory() {
   const [filterStatus, setFilterStatus] = useState("All");
   const [page, setPage] = useState(1);
   const PER_PAGE = 10;
+  const [isMobile, setIsMobile] = useState(
+    typeof window !== "undefined" ? window.innerWidth <= 768 : false
+  );
 
   const fetchOrders = async () => {
-    try { setLoading(true); setError(null);
+    try {
+      setLoading(true); setError(null);
       const res = await getOrders(); setOrders(res.data);
     } catch (e) { setError(e.response?.data?.message || "Failed to load orders."); }
     finally { setLoading(false); }
@@ -205,9 +240,16 @@ export default function OrderHistory() {
 
   useEffect(() => { fetchOrders(); }, []);
 
+  useEffect(() => {
+    const handleResize = () => setIsMobile(window.innerWidth <= 768);
+    window.addEventListener("resize", handleResize);
+    return () => window.removeEventListener("resize", handleResize);
+  }, []);
+
   const handleCancel = async (id) => {
     if (!window.confirm("Cancel this order?")) return;
-    try { setCancelling(id); await cancelOrder(id);
+    try {
+      setCancelling(id); await cancelOrder(id);
       setOrders(prev => prev.map(o => o._id === id ? { ...o, status: "Cancelled" } : o));
     } catch (e) { alert(e.response?.data?.message || "Failed to cancel."); }
     finally { setCancelling(null); }
@@ -221,14 +263,21 @@ export default function OrderHistory() {
   const paginated = filtered.slice((page - 1) * PER_PAGE, page * PER_PAGE);
 
   return (
-    <div style={{ background: BG, minHeight: "100vh", fontFamily: "'Segoe UI', system-ui, sans-serif", color: TEXT }}>
+    <div style={{
+      background: BG,
+      minHeight: "100vh",
+      overflowX: "hidden",
+      fontFamily: "'Segoe UI', system-ui, sans-serif",
+      color: TEXT,
+    }}>
       <style>{`
         @keyframes spin { to { transform: rotate(360deg); } }
         @keyframes fadeUp { from { opacity:0; transform:translateY(10px); } to { opacity:1; transform:translateY(0); } }
         * { box-sizing: border-box; }
+        .filter-scroll::-webkit-scrollbar { display: none; }
       `}</style>
 
-      {/* breadcrumb banner */}
+      {/* ── Breadcrumb banner ── */}
       <div style={{
         background: "#1A1A1A", padding: "28px 0", position: "relative",
         backgroundImage: "url('https://images.unsplash.com/photo-1542838132-92c53300491e?w=1200&q=60')",
@@ -237,54 +286,122 @@ export default function OrderHistory() {
         <div style={{ position: "absolute", inset: 0, background: "rgba(0,0,0,0.6)" }} />
         <div style={{ maxWidth: 1100, margin: "0 auto", padding: "0 24px", position: "relative" }}>
           <div style={{ display: "flex", alignItems: "center", gap: 8, fontSize: 13, color: "rgba(255,255,255,0.65)" }}>
-            <Link to="/">🏠</Link><span>›</span> 
+            <Link to="/">🏠</Link><span>›</span>
             <span style={{ color: WHITE, fontWeight: 600 }}>Order History</span>
           </div>
           <h1 style={{ margin: "8px 0 0", fontSize: 26, fontWeight: 700, color: WHITE }}>Order History</h1>
         </div>
       </div>
 
-      {/* layout */}
-      <div style={{ maxWidth: 1100, margin: "0 auto", padding: window.innerWidth <= 768 ? "20px 12px" : "32px 24px", display: "grid", gridTemplateColumns:  window.innerWidth <= 768 ? "1fr" : "220px 1fr", gap: 28 }}>
+      {/* ── Layout ── */}
+      <div style={{
+        width: "100%",
+        maxWidth: 1100,
+        margin: "0 auto",
+        padding: isMobile ? "16px 10px" : "32px 24px",
+        display: "grid",
+        gridTemplateColumns: isMobile ? "1fr" : "220px minmax(0, 1fr)",
+        gap: isMobile ? 16 : 28,
+      }}>
 
-        {/* SIDEBAR */}
-                <div className="bg-[#0b1a2c] text-white p-6 rounded-xl">
-                  <h2 className="text-xl font-bold mb-6">My Account</h2>
-        
-                  <ul className="space-y-4 text-sm">
-                    <li><Link to="/dashboard">My Profile</Link></li>
-                    <li><Link to="/wishlist">Wishlist</Link></li>
-                    <li><Link to="/cart">Cart</Link></li>
-                    <li><Link to="/orders">Order History</Link></li>
-                    <li><Link to="/returns">Returns</Link></li>
-                    <li><Link to="/track-order">Track Order</Link></li>
-                  </ul>
-                </div>
+        {/* ── Sidebar ── */}
+        <div style={{
+          background: "#0b1a2c",
+          color: WHITE,
+          padding: "20px 16px",
+          borderRadius: 12,
+          width: "100%",
+          /* On mobile, show as a compact horizontal nav */
+          ...(isMobile ? {
+            display: "flex",
+            alignItems: "center",
+            gap: 0,
+            overflowX: "auto",
+            padding: "12px 16px",
+          } : {}),
+        }}>
+          {!isMobile && (
+            <h2 style={{ fontSize: 16, fontWeight: 700, marginBottom: 20, marginTop: 0 }}>My Account</h2>
+          )}
+          <ul style={{
+            listStyle: "none",
+            margin: 0,
+            padding: 0,
+            display: "flex",
+            flexDirection: isMobile ? "row" : "column",
+            gap: isMobile ? 0 : 14,
+            alignItems: isMobile ? "center" : "stretch",
+          }}>
+            {[
+              { to: "/dashboard", label: "Profile" },
+              { to: "/wishlist",  label: "Wishlist" },
+              { to: "/cart",      label: "Cart" },
+              { to: "/orders",    label: "Orders" },
+              { to: "/returns",   label: "Returns" },
+              { to: "/track-order", label: "Track" },
+            ].map(({ to, label }) => (
+              <li key={to}>
+                <Link to={to} style={{
+                  display: "block",
+                  color: "rgba(255,255,255,0.8)",
+                  textDecoration: "none",
+                  fontSize: isMobile ? 12 : 14,
+                  fontWeight: 500,
+                  padding: isMobile ? "6px 10px" : "4px 0",
+                  whiteSpace: "nowrap",
+                  borderRadius: 6,
+                  transition: "color 0.15s",
+                }}>
+                  {label}
+                </Link>
+              </li>
+            ))}
+          </ul>
+        </div>
 
-        {/* main panel */}
-        <main style={{ animation: "fadeUp 0.35s ease" }}>
-          <div style={{ background: WHITE, borderRadius: 12, border: `1px solid ${BORDER}`, overflow: "hidden" }}>
+        {/* ── Main panel ── */}
+        <main style={{ animation: "fadeUp 0.35s ease", minWidth: 0 }}>
+          <div style={{ background: WHITE, borderRadius: 12, border: `1px solid ${BORDER}` }}>
 
-            {/* header + filters */}
+            {/* Header + filters */}
             <div style={{
-              padding: "18px 24px", borderBottom: `1px solid ${BORDER}`,
-              display: "flex", flexWrap: "wrap", alignItems: "center", justifyContent: "space-between", gap: 12,
+              padding: "16px 16px",
+              borderBottom: `1px solid ${BORDER}`,
+              display: "flex",
+              flexWrap: "wrap",
+              alignItems: "center",
+              justifyContent: "space-between",
+              gap: 10,
             }}>
-              <h2 style={{ margin: 0, fontSize: 17, fontWeight: 700, color: TEXT }}>Order History</h2>
-              <div style={{ display: "flex", gap: 6, flexWrap: "wrap" }}>
+              <h2 style={{ margin: 0, fontSize: 16, fontWeight: 700, color: TEXT }}>Order History</h2>
+              {/* Filter pills — scrollable on mobile */}
+              <div
+                className="filter-scroll"
+                style={{
+                  display: "flex",
+                  gap: 6,
+                  overflowX: "auto",
+                  WebkitOverflowScrolling: "touch",
+                  scrollbarWidth: "none",
+                  paddingBottom: 2,
+                  flexWrap: isMobile ? "nowrap" : "wrap",
+                  maxWidth: "100%",
+                }}
+              >
                 {filters.map(f => (
                   <button key={f} onClick={() => { setFilterStatus(f); setPage(1); }} style={{
-                    padding: "5px 13px", borderRadius: 99, fontSize: 12, fontWeight: 600,
+                    padding: "5px 12px", borderRadius: 99, fontSize: 12, fontWeight: 600,
                     cursor: "pointer", transition: "all 0.15s",
                     background: filterStatus === f ? G : "transparent",
                     color: filterStatus === f ? WHITE : MUTED,
                     border: filterStatus === f ? `1px solid ${G}` : `1px solid ${BORDER}`,
+                    flexShrink: 0,
                   }}>{f}</button>
                 ))}
               </div>
             </div>
 
-            {/* loading */}
+            {/* Loading */}
             {loading && (
               <div style={{ padding: 60, textAlign: "center" }}>
                 <div style={{
@@ -296,7 +413,7 @@ export default function OrderHistory() {
               </div>
             )}
 
-            {/* error */}
+            {/* Error */}
             {!loading && error && (
               <div style={{ padding: 40, textAlign: "center" }}>
                 <div style={{ fontSize: 36, marginBottom: 10 }}>⚠️</div>
@@ -308,7 +425,7 @@ export default function OrderHistory() {
               </div>
             )}
 
-            {/* empty */}
+            {/* Empty */}
             {!loading && !error && orders.length === 0 && (
               <div style={{ padding: 60, textAlign: "center" }}>
                 <div style={{ fontSize: 52, marginBottom: 14 }}>🛒</div>
@@ -317,7 +434,7 @@ export default function OrderHistory() {
               </div>
             )}
 
-            {/* no filter results */}
+            {/* No filter results */}
             {!loading && !error && orders.length > 0 && filtered.length === 0 && (
               <div style={{ padding: 40, textAlign: "center" }}>
                 <div style={{ fontSize: 36, marginBottom: 10 }}>🔍</div>
@@ -325,22 +442,48 @@ export default function OrderHistory() {
               </div>
             )}
 
-            {/* table */}
+            {/* ── Table — horizontal scroll wrapper ── */}
             {!loading && !error && paginated.length > 0 && (
-              <div style={{ overflowX: "auto" }}>
-                <table style={{ width: "100%", minWidth: 700, borderCollapse: "collapse" }}>
+              <div style={{
+                width: "100%",
+                overflowX: "auto",
+                WebkitOverflowScrolling: "touch",
+                /* Ensure the wrapper itself doesn't overflow the parent card */
+                maxWidth: "100%",
+              }}>
+                <table style={{
+                  /* Min width so columns don't collapse; scrolls on mobile */
+                  minWidth: 520,
+                  width: "100%",
+                  borderCollapse: "collapse",
+                  tableLayout: "auto",
+                }}>
                   <thead>
                     <tr style={{ background: BG, borderBottom: `2px solid ${BORDER}` }}>
-                      {["ORDER ID", "DATE", "TOTAL", "STATUS", "ACTION"].map(h => (
-                        <th key={h} style={{
-                          padding: "11px 16px", textAlign: "left",
-                          fontSize: 11, fontWeight: 700, color: MUTED, letterSpacing: "0.07em",
-                        }}>{h}</th>
+                      {[
+                        { full: "ORDER ID", short: "ID" },
+                        { full: "DATE",     short: "DATE" },
+                        { full: "TOTAL",    short: "TOTAL" },
+                        { full: "STATUS",   short: "STATUS" },
+                        { full: "ACTION",   short: "ACT" },
+                      ].map(({ full, short }) => (
+                        <th key={full} style={{
+                          padding: isMobile ? "10px 8px" : "11px 16px",
+                          textAlign: "left",
+                          fontSize: isMobile ? 10 : 11,
+                          fontWeight: 700,
+                          color: MUTED,
+                          letterSpacing: "0.07em",
+                          whiteSpace: "nowrap",
+                        }}>
+                          {isMobile ? short : full}
+                        </th>
                       ))}
                     </tr>
                   </thead>
+
                   <tbody>
-                    {paginated.map(order => (
+                    {paginated.map((order) => (
                       <OrderRow
                         key={order._id}
                         order={order}
@@ -348,6 +491,7 @@ export default function OrderHistory() {
                         cancelling={cancelling}
                         expanded={expanded === order._id}
                         onExpand={toggleExpand}
+                        isMobile={isMobile}
                       />
                     ))}
                   </tbody>
@@ -355,11 +499,12 @@ export default function OrderHistory() {
               </div>
             )}
 
-            {/* pagination */}
+            {/* Pagination */}
             {!loading && !error && totalPages > 1 && (
               <div style={{
                 padding: "16px 24px", borderTop: `1px solid ${BORDER}`,
-                display: "flex", alignItems: "center", justifyContent: "center", gap: 6,
+                display: "flex", alignItems: "center", justifyContent: "center",
+                gap: 6, flexWrap: "wrap",
               }}>
                 <button onClick={() => setPage(p => Math.max(1, p - 1))} disabled={page === 1} style={{
                   width: 32, height: 32, borderRadius: 8, border: `1px solid ${BORDER}`,
